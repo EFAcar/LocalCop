@@ -1,0 +1,191 @@
+---
+title: "Parametric Copula Families and Their Functions"
+params:
+  do_calc: FALSE
+output:
+  bookdown::html_vignette2:
+    toc: true
+author: "Alan Kuchinsky, Elif F. Acar, Martin Lysy"
+date: 2024-04-18
+bibliography: copulaReferences.bib
+link-citations: true
+vignette: >
+  %\VignetteIndexEntry{Parametric Copula Families and Their Functions}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, echo = FALSE}
+library(LocalCop)
+```
+
+
+This document contains the details of the copula families implemented in **LocalCop**. Specifically, we discuss the implementations of the bivariate copula CDF, the conditional CDF, also known as the h-function, and the bivariate copula PDF for the commonly used parametric copula families. 
+<!-- For the conditional CDF, most of the copula implemented are symmetric in $u$ and $v$, so it is sufficient to provide one conditional CDF, and a simple swap of the variables will provide the other conditional CDF. Where this is not the case, both conditional CDF's will be provided. The document will offer both the original-scale and the logarithm-scale version of each formula where applicable. It should also be noted that the implementation utilizes the logarithm-scale version where possible to increase accuracy. -->
+
+## Gaussian Copula
+
+The Gaussian copula family has a single parameter $\rho \in (-1, 1)$ and its CDF is given by
+$$
+C(u, v; \rho) = \Phi_2 ( \Phi^{-1}(u), \Phi^{-1}(v) ; \rho),
+$$
+where $\Phi_2$ is the standard bivariate normal CDF with the correlation $\rho$ and $\Phi^{-1}$ is the quantile function of the standard univariate normal distribution.
+<!-- The implementation of $\Phi_2$ is available in **mvtnorm**. However, there no equivalent function for the bivariate normal CDF or the univariate normal quantile functions in **TMB**. Therefore, the current release of **LocalCop** does not contain `pGaussian`.  -->
+
+The conditional CDF for the Gaussian copula is 
+$$
+C(u \mid v; \rho) = \Phi\left(\dfrac{ \Phi^{-1}(u)-\rho \Phi^{1}(v) }{\sqrt{1-\rho^2} } \right),
+$$
+
+with $\Phi$ the univariate standard normal CDF. 
+<!-- Due to the unavailability of the normal quantile function in **TMB**, the current release of **LocalCop** does not contain `hGaussian`.  -->
+
+The density of the Gaussian copula is
+$$
+c(u, v; \rho) = \frac{1}{\sqrt{1-\rho^2}} \exp \left\{ \frac{-1}{2} \frac{\rho^2  (\Phi^{-1}(u))^2 - 2 \rho \Phi^{-1}(u) \Phi^{-1}(v) + \rho^2 (\Phi^{-1}(v))^2 } {1-\rho^2}\right\}.
+$$
+
+To ease the log-likelihood calculations, we implement the density function `dGaussian` in the logarithmic scale using
+$$
+\log(c(u, v; \rho))= -\frac{1}{2}\ln(1 - \rho^2) - \frac{1}{2} \frac{\rho^2  (\Phi^{-1}(u))^2 - 2 \rho \Phi^{-1}(u) \Phi^{-1}(v) + \rho^2 (\Phi^{-1}(v))^2 } {1-\rho^2}.
+$$
+
+
+
+## Student Copula
+
+The Student copula family has two parameters, the correlation between the two $t$-distributed variables, $\rho \in [-1, 1]$, and the degrees of freedom of both $t$-distributions, $\nu > 0$.
+
+
+The Student copula CDF is given by
+$$
+C(u, v; \rho, \nu) = t_2(t_\nu^{-1}(u), t_\nu^{-1}(v); \rho, \nu),
+$$
+where $t_2$ is the standard bivariate $t$ distribution and $t^{-1}$ is the quantile function of the univariate $t$ distribution with degrees of freedom $\nu$.
+
+
+The conditional CDF for the Student $t$ copula is
+$$
+C(v | u; \rho, \nu) = t_\nu \left(\dfrac{t^{-1}_\nu(v) - \rho t_\nu^{-1}(u)}{\sqrt{(1 - \rho^2)\dfrac{\nu + t^{-1}_\nu(u)^2}{\nu + 1}}} \right).
+$$
+
+The copula PDF is
+$$
+c(u, v; \rho, \nu) = 
+\dfrac{\Gamma\left(\dfrac{\nu + 2}{2}\right) \Gamma\left(\dfrac{\nu}{2}\right) \left(1 + \dfrac{t^{-1}_\nu(u)^2 + t^{-1}_\nu(v)^2 - 2\rho t^{-1}_\nu(u) t^{-1}_\nu(v)}{\nu (1 - \rho^2)}\right)^{-\frac{\nu + 2}{2}}}
+{\sqrt{1 - \rho^2}\Gamma\left(\dfrac{\nu + 1}{2}\right)^2 \left(1 + \dfrac{t^{-1}_\nu(u)^2}{\nu}\right)^{-\frac{\nu + 1}{2}} 
+\left(1 + \dfrac{t^{-1}_\nu(v)^2}{\nu}\right)^{-\frac{\nu + 1}{2}}}.
+$$
+
+
+## Clayton Copula
+
+The Clayton copula family has a single parameter $\theta \in [0, \infty)$. Its CDF is given by
+$$
+C(u, v; \theta) = \left(u^{-\theta} + v^{-\theta} - 1\right)^{-\frac{1}{\theta}}.
+$$
+The implementation of the Clayton copula CDF `pClayton` uses the logarithmic scale 
+$$ 
+\log(C(u, v; \theta)) = -\frac{1}{\theta} \log\left(u^{-\theta} + v^{-\theta} - 1\right).
+$$
+
+The conditional CDF of the Clayton copula is
+$$
+C(v \mid u; \theta) = \left(1 + u^\theta(v^{-\theta} - 1)\right)^{-\frac{1}{\theta} - 1},
+$$
+
+and is implemented in `hClayton` in the logarithmic scale
+$$
+\log(C(v \mid u; \theta)) = \left(-\frac{1}{\theta} - 1\right) \log\left(1 + u^\theta(v^{-\theta} - 1)\right).
+$$
+The copula PDF for the Clayton copula is 
+$$
+c(u, v; \theta) = (1 + \theta) (uv)^{-\theta - 1} \left(u^{-\theta} + v^{-\theta} - 1\right)^{-\frac{1}{\theta} - 2}.
+$$
+The implementation of the density `dClayton` also uses the logarithmic scale
+$$
+\log(c(u, v; \theta)) = \log(1 + \theta) - (\theta + 1) \log(uv) - \left(\frac{1}{\theta} + 2\right) \log\left(u^{-\theta} + v^{-\theta} - 1\right).
+$$
+
+
+## Gumbel Copula
+
+The Gumbel copula family has a single parameter $\theta \in [1, \infty)$ and its CDF is
+$$
+C(u, v; \theta) = \exp\left[-\left\{(-\log(u))^\theta + (-\log(v))^\theta\right\}^{\frac{1}{\theta}}\right].
+$$
+The implementation of the CDF in `pGumbel` uses the logaritmic scale
+$$
+\log(C(u, v; \theta)) =  -  \left[(-\log(u))^\theta + (-\log(v))^\theta \right]^{\frac{1}{\theta}}.
+$$
+
+The conditional CDF is given by
+$$
+C(v \mid u; \theta) = u^{-1}\exp\left[ -\left\{(-\log(u))^\theta + (-\log(v))^\theta\right\}^\frac{1}{\theta}\right]
+\left(1 + \left(\frac{\log(v)}{\log(u)}\right)^\theta\right)^{\frac{1}{\theta} - 1}.
+$$
+
+The function `hGumbel` is implemented in the logarithmic scale
+$$
+\log(C(v \mid u; \theta)) = -\log(u) -\left\{(-\log(u))^\theta + (-\log(v))^\theta\right\}^\frac{1}{\theta} + \left(\frac{1}{\theta} - 1\right)\log\left(1 + \left(\frac{\log(v)}{\log(u)}\right)^\theta\right).
+$$
+
+The Gumbel copula PDF is given by
+\begin{multline*}
+c(u, v; \theta)  =  \dfrac{1}{uv} 
+\exp\left[-\left\{(-\log(u))^\theta + (-\log(v))^\theta\right\}^\frac{1}{\theta}\right] 
+\left(\log(u)\log(v)\right)^{\theta-1}
+\\
+\left((-\log(u))^\theta + (-\log(v))^\theta\right)^{\frac{2}{\theta} - 2} 
+\left[1+ (\theta-1) \left\{(-\log(u))^\theta + (-\log(v))^\theta\right\}^\frac{1}{\theta} \right].
+\end{multline*}
+
+
+The implementation of `dGumbel` uses the logarithmic scale
+\begin{multline*}
+\log(c(u, v; \theta)) =
+- \log{uv} -\left( (-\log(u))^\theta + (-\log(v))^\theta\right)^\frac{1}{\theta}
++ (\theta-1) \log\left\{ \log(u)\log(v)\right\}
+\\
++ \left(\frac{2}{\theta} - 2\right) \log \left\{ (-\log(u))^\theta + (-\log(v))^\theta \right\}
+\\
++ \log \left[1+ (\theta-1) \left\{(-\log(u))^\theta + (-\log(v))^\theta\right\}^\frac{1}{\theta} \right].
+\end{multline*}
+<!-- -\left((-\ln(u))^\theta + (-\ln(v))^\theta\right)^\frac{1}{\theta} + \ln\left(\left((-\ln(u))^\theta + (-\ln(v))^\theta\right)^\frac{1}{\theta} + \theta - 1\right) + (\frac{1}{\theta} - 2)\ln\left((-\ln(u))^\theta + (-\ln(v))^\theta\right) + \ln(\ln(u)\ln(v)) - \ln(uv). -->
+
+## Frank Copula
+
+The Frank copula has a single parameter $\theta \in \mathbb{R} \setminus \{0\}$. 
+Its CDF is:
+$$
+C(u, v; \theta) = -\dfrac{1}{\theta} \log\left( 1+ \dfrac{(e^{-\theta u} - 1)(e^{-\theta v}-1)}{ e^{-\theta}-1}\right).
+$$
+
+<!-- The implementation of the Frank copula CDF does not use the logarithmic scale. -->
+
+The conditional CDF is given by
+$$
+C(v \mid u; \theta) = \dfrac{ e^{-\theta u}(e^{-\theta v} - 1)}{e^{-\theta} - 1 + (e^{-\theta u} - 1)(e^{-\theta v} - 1)}.
+$$
+The conditional CDF in logarithmic scale is
+$$
+\log(C(v \mid u; \theta))= -u\theta + \log (e^{-\theta v} - 1) - \log\left( e^{-\theta} - 1 + (e^{-\theta u} - 1)(e^{-\theta v} - 1) \right).
+$$
+
+The copula PDF for the Frank family is
+$$
+c(u, v; \theta) = \frac{\theta (1 - e^{-\theta}) e^{-\theta (u + v)} }
+{\left[ e^{-\theta} - 1 + (e^{-\theta u} - 1)(e^{-\theta v} - 1)\right]^2}.
+$$
+The density implementation in `dFrank` uses the logarithmic scale
+$$
+\log(c(u, v; \theta)) = \log(\theta (1 - e^{-\theta})) - \theta (u + v) - 2 \log\left( e^{-\theta} - 1 + (e^{-\theta u} - 1)(e^{-\theta v} - 1) \right).
+$$
+
