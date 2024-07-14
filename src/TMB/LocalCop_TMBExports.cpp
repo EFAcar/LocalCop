@@ -18,6 +18,7 @@
 #include "pgumbel.hpp"
 #include "pt.hpp"
 #include "qt.hpp"
+#include "SurvLikelihood.hpp"
 
 template<class Type>
 Type objective_function<Type>::operator() () {
@@ -54,6 +55,8 @@ Type objective_function<Type>::operator() () {
     return pt(this);
   } else if(model == "qt") {
     return qt(this);
+  } else if(model == "SurvLikelihood") {
+    return SurvLikelihood(this);
   } else {
     Rf_error("Unknown model.");
   }

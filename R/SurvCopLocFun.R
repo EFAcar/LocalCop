@@ -13,11 +13,10 @@
 #' @template param-degree
 #' @param eta Value of the copula dependence parameter.  Scalar or vector of length two, depending on whether `degree` is 0 or 1.
 #' @return A list as returned by a call to [TMB::MakeADFun()].  In particular, this contains elements `fun` and `gr` for the *negative* local likelihood and its gradient with respect to `eta`.
-#' @example examples/SurvCopLocFun.R
 #' @export
-SurvCopLocFun <- function(u1, u2, status1, status2, family,
-                           x, x0, wgt, degree = 1,
-                           eta) {
+SurvCopLocFun <- function(u1, u2, status1, status2, 
+                          family, x, x0, wgt, 
+                          degree = 1, eta) {
   if(!family %in% 3:5) {
     stop("Unsupported copula family (must be integer between 3-5).")
   }
