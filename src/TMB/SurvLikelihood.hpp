@@ -54,10 +54,10 @@ Type SurvLikelihood(objective_function<Type> *obj) {
       vector<Type> _u1 = u1.segment(cen_start(j), cen_length(j));
       vector<Type> _u2 = u2.segment(cen_start(j), cen_length(j));
       vector<Type> _theta = theta.segment(cen_start(j), cen_length(j));
-      res += (_wgt * LocalCop::hclayton(_u1, _u2, _theta, 1)).sum();
+      res += (_wgt * LocalCop::hclayton(_u2, _u1, _theta, 1)).sum();
       // res += (wgt.segment(cen_start(j), cen_length(j)) *
-      //   LocalCop::hclayton(u1.segment(cen_start(j), cen_length(j)),
-      //                      u2.segment(cen_start(j), cen_length(j)),
+      //   LocalCop::hclayton(u2.segment(cen_start(j), cen_length(j)),
+      //                      u1.segment(cen_start(j), cen_length(j)),
       //                      theta.segment(cen_start(j), cen_length(j)), 1)).sum();
       }
     // second censored
@@ -67,10 +67,10 @@ Type SurvLikelihood(objective_function<Type> *obj) {
       vector<Type> _u1 = u1.segment(cen_start(j), cen_length(j));
       vector<Type> _u2 = u2.segment(cen_start(j), cen_length(j));
       vector<Type> _theta = theta.segment(cen_start(j), cen_length(j));
-      res += (_wgt * LocalCop::hclayton(_u2, _u1, _theta, 1)).sum();
+      res += (_wgt * LocalCop::hclayton(_u1, _u2, _theta, 1)).sum();
       // res += (wgt.segment(cen_start(j), cen_length(j)) * 
-      //   LocalCop::hclayton(u2.segment(cen_start(j), cen_length(j)), 
-      //                      u1.segment(cen_start(j), cen_length(j)), 
+      //   LocalCop::hclayton(u1.segment(cen_start(j), cen_length(j)), 
+      //                      u2.segment(cen_start(j), cen_length(j)), 
       //                      theta.segment(cen_start(j), cen_length(j)), 1)).sum();
     }
     // both censored

@@ -25,11 +25,7 @@ test_that("Survival likelihood is same in manual calculation and TMB", {
       epar <- args$epar
       x <- args$x
       wgt <- args$wgt
-      wgt <- rep(1, length(u1))
       wpos <- wgt > 0 # index of positive weights
-      ind <- 2
-      wpos[ind] <- TRUE
-      wpos[-ind] <- FALSE
       # subset data
       wgt <- wgt[wpos]
       x <- x[wpos]
@@ -38,20 +34,20 @@ test_that("Survival likelihood is same in manual calculation and TMB", {
       status1 <- status1[wpos]
       status2 <- status2[wpos]
       epar <- epar[wpos]
-      # # censoring groups 
-      # delta1 <- (1-status1)*(1-status2) # both censored
-      # delta2 <- status1*(1-status2) # first uncensored, second censored
-      # delta3 <- (1-status1)*status2 # first censored, second uncensored
-      # delta4 <- status1*status2 # both uncensored
-      # ix <- c(which(delta4==1), which(delta3==1), which(delta2==1), which(delta1==1))
-      # # reorder data based on censoring groups
-      # wgt <- wgt[ix]
-      # x <- x[ix]
-      # u1 <- u1[ix]
-      # u2 <- u2[ix]
-      # status1 <- status1[ix]
-      # status2 <- status2[ix]
-      # epar <- epar[ix]
+      # censoring groups
+      delta1 <- (1-status1)*(1-status2) # both censored
+      delta2 <- status1*(1-status2) # first uncensored, second censored
+      delta3 <- (1-status1)*status2 # first censored, second uncensored
+      delta4 <- status1*status2 # both uncensored
+      ix <- c(which(delta4==1), which(delta3==1), which(delta2==1), which(delta1==1))
+      # reorder data based on censoring groups
+      wgt <- wgt[ix]
+      x <- x[ix]
+      u1 <- u1[ix]
+      u2 <- u2[ix]
+      status1 <- status1[ix]
+      status2 <- status2[ix]
+      epar <- epar[ix]
       # loglik in R
       ll_r <- SurvCopDens1(u1 = u1, 
                            u2 = u2,
@@ -71,7 +67,6 @@ test_that("Survival likelihood is same in manual calculation and TMB", {
                               wgt = wgt, 
                               eta = args$eta)
       ll_tmb <- -ll_tmb$fn(args$eta)
-      c(ll_r, ll_tmb)
       expect_equal(ll_r, ll_tmb)
     }
   }
