@@ -1,10 +1,9 @@
 #--- test survival likelihood implementation in TMB -------------------------------
 
-## library(LocalCop)
-## library(TMB)
-## library(testthat)
-## library(SurvivalCop)
-## source("tests/testthat/helper_surv.R") 
+library(LocalCop)
+library(TMB)
+library(testthat)
+source("helper_surv.R") 
 
 test_that("Survival likelihood is same in manual calculation and TMB", {
   nreps <- 20
@@ -49,7 +48,7 @@ test_that("Survival likelihood is same in manual calculation and TMB", {
       status2 <- status2[ix]
       epar <- epar[ix]
       # loglik in R
-      ll_r <- SurvCopDens1(u1 = u1, 
+      ll_r <- SurvCopDens(u1 = u1, 
                            u2 = u2,
                            status1 = status1, 
                            status2 = status2, 

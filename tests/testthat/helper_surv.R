@@ -42,7 +42,8 @@ survdata_sim <- function(family) {
   for(ii in 1:100) {
     # generate valid eta/epar pair:
     eta <- rnorm(2)/2  # evaluation parameter
-    epar <- LocalCop::BiCopEta2Par(family = family, eta = eta[1] + eta[2] * (x-x0))$par
+    epar <- LocalCop::BiCopEta2Par(family = family, 
+                                   eta = eta[1] + eta[2] * (x-x0))$par
     if((!family %in% c("3", "4")) ||
        ((family == "3") && (max(epar) < 27.9)) ||
        ((family == "4") && (max(epar) < 16.9))) {
@@ -72,3 +73,69 @@ data_checks <- function(args){
        epar = epar, wgt = wgt,
        x = x, x0 = args$x0, eta = args$eta)
 }
+
+
+
+SurvCopDens <- function(u1, u2, status1, status2, family, par){
+  
+  get.model <- SurvCopModel(family)
+  model <-  get.model(u1, u2, par)
+  n <- length(u1)
+  
+  delta1 <- (1-status1)*(1-status2)
+  delta2 <- status1*(1-status2)
+  delta3 <- (1-status1)*status2
+  delta4 <- status1*status2
+  
+  res <- sapply(1:n, function(i){
+    term <- ifelse(delta1[i]==1, model$cdf[i],
+                   ifelse(delta2[i]==1, model$partial1[i],
+                          ifelse(delta3[i]==1, model$partial2[i], model$pdf[i])))
+    if(is.finite(term)){return(log(term))
+    }else{return(NA)}
+  })
+  
+  return(res)
+  
+}
+
+
+
+SurvCopModel <- function(family){
+  
+  if(family==3){
+    copula_model <- function(u1, u2, par){
+      cdf <- ((u1^(-par)) + (u2^(-par))-1)^(-1/par)
+      partial1 <- u1^(-(par+1)) * (u1^(-par)+u2^(-par)-1)^(-(1+1/par))
+      partial2 <- u2^(-(par+1)) * (u1^(-par)+u2^(-par)-1)^(-(1+1/par))
+      pdf <- (par+1)* u1^(-(par+1)) * u2^(-(par+1))* (u1^(-par)+u2^(-par)-1)^(-(2+1/par))
+      
+      model <- list(cdf=cdf, partial1=partial1, partial2=partial2,  pdf=pdf)
+      return(model)
+    }}
+  
+  if(family==4){
+    copula_model <- function(u1, u2, par){
+      cdf <- exp(-((-log(u1))^(par)+(-log(u2))^(par))^(1/(par)))
+      partial1 <- (1/u1) * (-log(u1))^((par)-1) * ((-log(u1))^(par)+(-log(u2))^(par))^(1/(par)-1) * exp(-((-log(u1))^(par)+(-log(u2))^(par))^(1/(par)))
+      partial2 <- (1/u2) * (-log(u2))^((par)-1) * ((-log(u1))^(par)+(-log(u2))^(par))^(1/(par)-1) * exp(-((-log(u1))^(par)+(-log(u2))^(par))^(1/(par)))
+      pdf <- (1/u1) *(1/u2) * exp(-((-log(u1))^(par)+(-log(u2))^(par))^(1/(par))) * (log(u1)*log(u2))^((par)-1) * ((-log(u1))^(par)+(-log(u2))^(par))^(2*(1/(par)-1)) * (1+ ((par)-1)* ((-log(u1))^(par)+(-log(u2))^(par))^(-1/(par)))
+      
+      model <- list(cdf=cdf, partial1=partial1, partial2=partial2,  pdf=pdf)
+      return(model)
+    }}
+  
+  
+  if(family==5){
+    copula_model <- function(u1, u2, par){
+      cdf <- (-1/par)*log(1+(((exp(-par*u1)-1)*(exp(-par*u2)-1))/(exp(-par)-1)))
+      partial1 <- exp(-(par)*u1) * (exp(-(par)*u2)-1) / ( (exp(-(par))-1) + (exp(-(par)*u1)-1) * (exp(-(par)*u2)-1))
+      partial2 <- exp(-(par)*u2) * (exp(-(par)*u1)-1) / ( (exp(-(par))-1) + (exp(-(par)*u1)-1) * (exp(-(par)*u2)-1))
+      pdf <- ((par) * (1-exp(-(par)))* exp(-(par)*(u1+u2)))/ ((1-exp(-(par))) - (1-exp(-(par)*u1)) * (1-exp(-(par)*u2)))^2
+      
+      model <- list(cdf=cdf, partial1=partial1, partial2=partial2,  pdf=pdf)
+      return(model)
+    }}
+  return(copula_model)  
+}  
+
