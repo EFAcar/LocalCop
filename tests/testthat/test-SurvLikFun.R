@@ -3,11 +3,11 @@
 library(LocalCop)
 library(TMB)
 library(testthat)
-source("helper_surv.R") 
+source("tests/testthat/helper_surv.R") 
 
 test_that("Survival likelihood is same in manual calculation and TMB", {
   nreps <- 20
-  test_descr <- expand.grid(family = 3, # only Archimedean families
+  test_descr <- expand.grid(family = c(3,4,5), # only Archimedean families
                             stringsAsFactors = FALSE)
   n_test <- nrow(test_descr)
   for(ii in 1:n_test) {

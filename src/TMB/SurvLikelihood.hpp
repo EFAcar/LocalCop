@@ -101,7 +101,7 @@ Type SurvLikelihood(objective_function<Type> *obj) {
         res += (_wgt * LocalCop::hgumbel(_u1, _u2, _theta, 1)).sum();
       }
       // both censored
-      int j=3;
+      j=3;
       if(cen_length(j) > 0) {
         vector<Type> _wgt = wgt.segment(cen_start(j), cen_length(j));
         vector<Type> _u1 = u1.segment(cen_start(j), cen_length(j));
@@ -113,7 +113,7 @@ Type SurvLikelihood(objective_function<Type> *obj) {
       // Frank copula
       vector<Type> theta = eta;
       // uncensored
-      int j=0;
+      int j=0; 
       if(cen_length(j) > 0) {
         vector<Type> _wgt = wgt.segment(cen_start(j), cen_length(j));
         vector<Type> _u1 = u1.segment(cen_start(j), cen_length(j));
@@ -122,7 +122,7 @@ Type SurvLikelihood(objective_function<Type> *obj) {
         res += (_wgt * LocalCop::dfrank(_u1, _u2, _theta, 1)).sum();
       }
       // first censored
-      int j=1;
+      j=1;
       if(cen_length(j) > 0) {
         vector<Type> _wgt = wgt.segment(cen_start(j), cen_length(j));
         vector<Type> _u1 = u1.segment(cen_start(j), cen_length(j));
@@ -131,17 +131,16 @@ Type SurvLikelihood(objective_function<Type> *obj) {
         res += (_wgt * LocalCop::hfrank(_u2, _u1, _theta, 1)).sum();
       }
       // second censored
-      int j=2;
+      j=2;
       if(cen_length(j) > 0) {
         vector<Type> _wgt = wgt.segment(cen_start(j), cen_length(j));
         vector<Type> _u1 = u1.segment(cen_start(j), cen_length(j));
         vector<Type> _u2 = u2.segment(cen_start(j), cen_length(j));
         vector<Type> _theta = theta.segment(cen_start(j), cen_length(j));
         res += (_wgt * LocalCop::hfrank(_u1, _u2, _theta, 1)).sum();
-        }
       }
       // both censored
-      int j=3;
+      j=3;
       if(cen_length(j) > 0) {
         vector<Type> _wgt = wgt.segment(cen_start(j), cen_length(j));
         vector<Type> _u1 = u1.segment(cen_start(j), cen_length(j));
