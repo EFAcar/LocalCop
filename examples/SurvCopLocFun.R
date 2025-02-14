@@ -5,7 +5,10 @@
 n <- 1000 # sample size
 family <- 3 # Clayton copula
 rho <- runif(1, -1, 1) # unconditional dependence parameter
-udata <- VineCopula::BiCopSim(n, family = family, par = rho, par2 = nu)
+par <- VineCopula::BiCopTau2Par(family, rho)
+sdata <- SurvSim(n, family = family, par = par, 
+                 marpar1 = c(1, 1), marpar2 = c(2, 2), marparc = c(3, 3),  
+                 mardist = "weibull", type = "rcen")
 
 # create likelihood function
 
