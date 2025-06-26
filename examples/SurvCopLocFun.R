@@ -33,13 +33,15 @@ rhovec <- runif(50, 0, 1)
 
 # create likelihood function for observed data (excluding zero's)
 ix <- which(u1==0 | u2==0)
-nll_obj <- SurvCopLocFun(u1 = u1[-ix], u2 = u2[-ix], 
-                         status1 = status1[-ix], status2 = status2[-ix],
+nll_obj <- SurvCopLocFun(u1 = u1, u2 = u2, 
+                         status1 = status1, 
+                         status2 = status2,
                          family = family, 
-                         x = rep(0,n-length(ix)), x0 = 0, # centered covariate x - x0 == 0
-                         wgt = rep(1, n-length(ix)), # unweighted
+                         x = rep(0,n), x0 = 0, # centered covariate x - x0 == 0
+                         wgt = rep(1, n), # unweighted
                          degree = 0, # zero-order fit
-                         eta = c(rho2eta(rho), 0))
+                         eta = c(rho2eta(rho), 0), 
+                         rm.zero = FALSE)
 stucop_lik <- function(rho) {
   -nll_obj$fn(c(rho2eta(rho), 0))
 }
@@ -55,7 +57,8 @@ nll_obj_new <- SurvCopLocFun(u1 = u1_new, u2 = u2_new,
                          x = rep(0,n), x0 = 0, # centered covariate x - x0 == 0
                          wgt = rep(1, n), # unweighted
                          degree = 0, # zero-order fit
-                         eta = c(rho2eta(rho), 0))
+                         eta = c(rho2eta(rho), 0), 
+                         rm.zero = FALSE)
 stucop_lik_new <- function(rho) {
   -nll_obj_new$fn(c(rho2eta(rho), 0))
 }

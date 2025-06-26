@@ -12,22 +12,42 @@
 #' @param wgt Vector of positive kernel weights.
 #' @template param-degree
 #' @param eta Value of the copula dependence parameter.  Scalar or vector of length two, depending on whether `degree` is 0 or 1.
+#' @param rm.zero Logical indicating whether zero values in `u1` and `u2` should be removed when calculating the local likelihood. If `rm.zero = TRUE`, the rows with `u1=0` or `u2=0` are removed from the data, if `rm.zero = FALSE`, then a small quantity is added to `u1` and `u2` to avoid numerical issues. 
 #' @return A list as returned by a call to [TMB::MakeADFun()].  In particular, this contains elements `fun` and `gr` for the *negative* local likelihood and its gradient with respect to `eta`.
 #' @export
 SurvCopLocFun <- function(u1, u2, status1, status2, 
                           family, x, x0, wgt, 
-                          degree = 1, eta) {
+                          degree = 1, eta, 
+                          rm.zero = TRUE) {
   if(!family %in% 3:5) {
     stop("Unsupported copula family (must be integer between 3-5).")
   }
-  wpos <- wgt > 0 # index of positive weights
+  
   # subset data 
+  wpos <- wgt > 0 # index of positive weights
   u1 <- u1[wpos]
   u2 <- u2[wpos]
   status1 <- status1[wpos]
   status2 <- status2[wpos]
   wgt <- wgt[wpos]
   x <- x[wpos]
+  
+  # handle zeros in u1 and u2
+  iz <- which(u1==0 | u2==0)
+  if(length(iz) > 0){
+  if(rm.zero == TRUE){
+    u1 <- u1[-iz]
+    u2 <- u2[-iz] 
+    status1 <- status1[-iz]
+    status2 <- status2[-iz]
+    x <- x[-iz]
+    wgt <- wgt[-iz]
+  }else{
+    u1 <- ifelse(u1==0, u1 + runif(1, min = 0, max = 10^-8), u1)
+    u2 <- ifelse(u2==0, u2 + runif(1, min = 0, max = 10^-8), u2)
+  }} 
+  
+
   # create TMB function
   # censoring groups 
   delta1 <- (1-status1)*(1-status2) # both censored

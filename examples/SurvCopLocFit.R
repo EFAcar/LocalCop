@@ -2,6 +2,7 @@
 set.seed(11)
 n <- 1000 # sample size
 family <- 3 # Clayton copula
+x <- runif(n)
 rho <- runif(1, 0, 1) # unconditional dependence parameter
 par <- VineCopula::BiCopTau2Par(family, rho)
 sdata <- SurvSim(n, family = family, par = par, 
@@ -19,9 +20,10 @@ status2 <- data[,4]
 u1 <- sapply(Y1, function(y){SurvivalCop::KM(t=y, Y = Y1, status = status1)})
 u2 <- sapply(Y2, function(y){SurvivalCop::KM(t=y, Y = Y2, status = status2)})
 
+
 # local likelihood estimation
 x0 <- seq(min(x), max(x), len = 100)
-band <- .02
+band <- .5
 system.time({
   eta_hat <- SurvCopLocFit(u1 = u1, u2 = u2,
                            status1 = status1, status2 = status2,
@@ -36,8 +38,10 @@ my_optim <- function(obj) {
   return(opt$par[1]) # always return constant term, even if degree > 0
 }
 system.time({
-  eta_hat2 <- CondiCopLocFit(u1 = udata[,1], u2 = udata[,2],
-                             family = family, x = x, x0 = x0, band = band,
+  eta_hat2 <- SurvCopLocFit(u1 = u1, u2 = u2,
+                             status1 = status1, status2 = status2,
+                             family = family, 
+                             x = x, x0 = x0, band = band,
                              optim_fun = my_optim)
 })
 

@@ -15,9 +15,9 @@ SurvCopLocFit(
   nx = 100,
   degree = 1,
   eta,
-  nu,
   kernel = KernEpa,
   band,
+  rm.zero = TRUE,
   optim_fun,
   cl = NA
 )
@@ -43,11 +43,11 @@ SurvCopLocFit(
 
 \item{eta}{Optional initial value of the copula dependence parameter (scalar).  If missing will be estimated unconditionally by \code{\link[VineCopula:BiCopEst]{VineCopula::BiCopEst()}}.}
 
-\item{nu}{Optional initial value of second copula parameter, if it exists.  If missing and required, will be estimated unconditionally by \code{\link[VineCopula:BiCopEst]{VineCopula::BiCopEst()}}.  If provided and required, will not be estimated.}
-
 \item{kernel}{Kernel function to use.  Should accept a numeric vector parameter and return a non-negative numeric vector of the same length.  See \code{\link[=KernFun]{KernFun()}}.}
 
 \item{band}{Kernal bandwidth parameter (positive scalar).  See \code{\link[=KernWeight]{KernWeight()}}.}
+
+\item{rm.zero}{Logical indicating whether zero values in \code{u1} and \code{u2} should be removed when calculating the local likelihood. If \code{rm.zero = TRUE}, the rows with \code{u1=0} or \code{u2=0} are removed from the data, if \code{rm.zero = FALSE}, then a small quantity is added to \code{u1} and \code{u2} to avoid numerical issues.}
 
 \item{optim_fun}{Optional specification of local likelihood optimization algorithm.  See \strong{Details}.}
 
@@ -58,7 +58,6 @@ List with the following elements:
 \describe{
 \item{\code{x}}{The vector of covariate values \code{x0} at which the local likelihood is fit.}
 \item{\code{eta}}{The vector of estimated dependence parameters of the same length as \code{x0}.}
-\item{\code{nu}}{The scalar value of the estimated (or provided) second copula parameter.}
 }
 }
 \description{
@@ -68,4 +67,59 @@ Estimate the bivariate copula dependence parameter \code{eta} at multiple covari
 By default, optimization is performed with the quasi-Newton algorithm provided by \code{\link[stats:nlminb]{stats::nlminb()}}, which uses gradient information provided by automatic differentiation (AD) as implemented by \pkg{TMB}.
 
 If the default method is to be overridden, \code{optim_fun} should be provided as a function taking a single argument corresponding to the output of \code{\link[=SurvCopLocFun]{SurvCopLocFun()}}, and return a scalar value corresponding to the estimate of \code{eta} at a given covariate value in \code{x0}.  Note that \pkg{TMB} calculates the \emph{negative} local (log)likelihood, such that the objective function is to be minimized.  See \strong{Examples}.
+}
+\examples{
+# simulate data
+set.seed(11)
+n <- 1000 # sample size
+family <- 3 # Clayton copula
+x <- runif(n)
+rho <- runif(1, 0, 1) # unconditional dependence parameter
+par <- VineCopula::BiCopTau2Par(family, rho)
+sdata <- SurvSim(n, family = family, par = par, 
+                 marpar1 = c(1, 1), marpar2 = c(2, 2), marparc = c(3, 3),  
+                 mardist = "weibull", type = "rcen")
+
+# get observed data
+data <- sdata$data
+Y1 <- data[,1]
+Y2 <- data[,2]
+status1 <- data[,3]
+status2 <- data[,4]
+
+# get KM estimates of the survival functions 
+u1 <- sapply(Y1, function(y){SurvivalCop::KM(t=y, Y = Y1, status = status1)})
+u2 <- sapply(Y2, function(y){SurvivalCop::KM(t=y, Y = Y2, status = status2)})
+
+
+# local likelihood estimation
+x0 <- seq(min(x), max(x), len = 100)
+band <- .5
+system.time({
+  eta_hat <- SurvCopLocFit(u1 = u1, u2 = u2,
+                           status1 = status1, status2 = status2,
+                           family = family, 
+                           x = x, x0 = x0, band = band)
+})
+
+  
+# custom optimization routine using stats::optim (gradient-free)
+my_optim <- function(obj) {
+  opt <- stats::optim(par = obj$par, fn = obj$fn, method = "Nelder-Mead")
+  return(opt$par[1]) # always return constant term, even if degree > 0
+}
+system.time({
+  eta_hat2 <- SurvCopLocFit(u1 = u1, u2 = u2,
+                             status1 = status1, status2 = status2,
+                             family = family, 
+                             x = x, x0 = x0, band = band,
+                             optim_fun = my_optim)
+})
+
+plot(x0, BiCopEta2Tau(family, eta = eta_fun(x0)), type = "l",
+     xlab = expression(x), ylab = expression(tau(x)))
+lines(x0, BiCopEta2Tau(family, eta = eta_hat$eta), col = "red")
+lines(x0, BiCopEta2Tau(family, eta = eta_hat2$eta), col = "blue")
+legend("bottomright", fill = c("black", "red", "blue"),
+       legend = c("True", "optim_default", "Nelder-Mead"))
 }

@@ -4,7 +4,19 @@
 \alias{SurvCopLocFun}
 \title{Create a \pkg{TMB} local likelihood function for survival data.}
 \usage{
-SurvCopLocFun(u1, u2, status1, status2, family, x, x0, wgt, degree = 1, eta)
+SurvCopLocFun(
+  u1,
+  u2,
+  status1,
+  status2,
+  family,
+  x,
+  x0,
+  wgt,
+  degree = 1,
+  eta,
+  rm.zero = TRUE
+)
 }
 \arguments{
 \item{u1}{Vector of first uniform response.}
@@ -26,6 +38,8 @@ SurvCopLocFun(u1, u2, status1, status2, family, x, x0, wgt, degree = 1, eta)
 \item{degree}{Integer specifying the polynomial order of the local likelihood function.  Currently only 0 and 1 are supported.}
 
 \item{eta}{Value of the copula dependence parameter.  Scalar or vector of length two, depending on whether \code{degree} is 0 or 1.}
+
+\item{rm.zero}{Logical indicating whether zero values in \code{u1} and \code{u2} should be removed when calculating the local likelihood. If \code{rm.zero = TRUE}, the rows with \code{u1=0} or \code{u2=0} are removed from the data, if \code{rm.zero = FALSE}, then a small quantity is added to \code{u1} and \code{u2} to avoid numerical issues.}
 }
 \value{
 A list as returned by a call to \code{\link[TMB:MakeADFun]{TMB::MakeADFun()}}.  In particular, this contains elements \code{fun} and \code{gr} for the \emph{negative} local likelihood and its gradient with respect to \code{eta}.
