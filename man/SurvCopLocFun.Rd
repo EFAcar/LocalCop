@@ -39,7 +39,7 @@ SurvCopLocFun(
 
 \item{eta}{Value of the copula dependence parameter.  Scalar or vector of length two, depending on whether \code{degree} is 0 or 1.}
 
-\item{rm.zero}{Logical indicating whether zero values in \code{u1} and \code{u2} should be removed when calculating the local likelihood. If \code{rm.zero = TRUE}, the rows with \code{u1=0} or \code{u2=0} are removed from the data, if \code{rm.zero = FALSE}, then a small quantity is added to \code{u1} and \code{u2} to avoid numerical issues.}
+\item{rm.zero}{Logical indicating whether zero values in \code{u1} and \code{u2} should be removed when calculating the local likelihood.}
 }
 \value{
 A list as returned by a call to \code{\link[TMB:MakeADFun]{TMB::MakeADFun()}}.  In particular, this contains elements \code{fun} and \code{gr} for the \emph{negative} local likelihood and its gradient with respect to \code{eta}.

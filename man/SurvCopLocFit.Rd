@@ -17,8 +17,8 @@ SurvCopLocFit(
   eta,
   kernel = KernEpa,
   band,
-  rm.zero = TRUE,
   optim_fun,
+  rm.zero = TRUE,
   cl = NA
 )
 }
@@ -47,9 +47,9 @@ SurvCopLocFit(
 
 \item{band}{Kernal bandwidth parameter (positive scalar).  See \code{\link[=KernWeight]{KernWeight()}}.}
 
-\item{rm.zero}{Logical indicating whether zero values in \code{u1} and \code{u2} should be removed when calculating the local likelihood. If \code{rm.zero = TRUE}, the rows with \code{u1=0} or \code{u2=0} are removed from the data, if \code{rm.zero = FALSE}, then a small quantity is added to \code{u1} and \code{u2} to avoid numerical issues.}
-
 \item{optim_fun}{Optional specification of local likelihood optimization algorithm.  See \strong{Details}.}
+
+\item{rm.zero}{Logical indicating whether zero values in \code{u1} and \code{u2} should be removed when calculating the local likelihood.}
 
 \item{cl}{Optional parallel cluster created with \code{\link[parallel:makeCluster]{parallel::makeCluster()}}, in which case optimization for each element of \code{x0} will be done in parallel on separate cores.  If \code{cl == NA}, computations are run serially.}
 }
@@ -69,16 +69,27 @@ By default, optimization is performed with the quasi-Newton algorithm provided b
 If the default method is to be overridden, \code{optim_fun} should be provided as a function taking a single argument corresponding to the output of \code{\link[=SurvCopLocFun]{SurvCopLocFun()}}, and return a scalar value corresponding to the estimate of \code{eta} at a given covariate value in \code{x0}.  Note that \pkg{TMB} calculates the \emph{negative} local (log)likelihood, such that the objective function is to be minimized.  See \strong{Examples}.
 }
 \examples{
+# the following example shows the local likelihood estimation 
+# for varying dependence parameter in bivariate survival data
+
 # simulate data
 set.seed(11)
-n <- 1000 # sample size
+n <- 2000 # sample size
 family <- 3 # Clayton copula
 x <- runif(n)
-rho <- runif(1, 0, 1) # unconditional dependence parameter
+truetau <- function(x, family){
+  eta <- 2*cos(3*x^2-1)-sin(2*x^3)+x
+  tau <- BiCopEta2Tau(family = family, eta=eta)
+  # tau <- rep(runif(1, 0, 1), length(x)) # constant dependence parameter in Kendall's tau scale
+  return(tau)
+}
+plot(x, truetau(x, family), ylim = c(0,1))
+rho <- truetau(x, family)
 par <- VineCopula::BiCopTau2Par(family, rho)
 sdata <- SurvSim(n, family = family, par = par, 
                  marpar1 = c(1, 1), marpar2 = c(2, 2), marparc = c(3, 3),  
                  mardist = "weibull", type = "rcen")
+
 
 # get observed data
 data <- sdata$data
@@ -87,14 +98,14 @@ Y2 <- data[,2]
 status1 <- data[,3]
 status2 <- data[,4]
 
-# get KM estimates of the survival functions 
+# get KM estimates of the survival functions -- for checks only
 u1 <- sapply(Y1, function(y){SurvivalCop::KM(t=y, Y = Y1, status = status1)})
 u2 <- sapply(Y2, function(y){SurvivalCop::KM(t=y, Y = Y2, status = status2)})
 
 
 # local likelihood estimation
 x0 <- seq(min(x), max(x), len = 100)
-band <- .5
+band <- .2
 system.time({
   eta_hat <- SurvCopLocFit(u1 = u1, u2 = u2,
                            status1 = status1, status2 = status2,
@@ -102,7 +113,7 @@ system.time({
                            x = x, x0 = x0, band = band)
 })
 
-  
+
 # custom optimization routine using stats::optim (gradient-free)
 my_optim <- function(obj) {
   opt <- stats::optim(par = obj$par, fn = obj$fn, method = "Nelder-Mead")
@@ -116,10 +127,13 @@ system.time({
                              optim_fun = my_optim)
 })
 
-plot(x0, BiCopEta2Tau(family, eta = eta_fun(x0)), type = "l",
-     xlab = expression(x), ylab = expression(tau(x)))
+
+
+# compare results
+plot(x0, truetau(x0, family), type = "l", 
+     xlab = expression(x), ylab = expression(tau(x)), ylim = c(0,1))
 lines(x0, BiCopEta2Tau(family, eta = eta_hat$eta), col = "red")
 lines(x0, BiCopEta2Tau(family, eta = eta_hat2$eta), col = "blue")
-legend("bottomright", fill = c("black", "red", "blue"),
+legend("bottomleft", fill = c("black", "red", "blue"),
        legend = c("True", "optim_default", "Nelder-Mead"))
 }

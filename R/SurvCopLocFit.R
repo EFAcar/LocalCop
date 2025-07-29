@@ -15,7 +15,7 @@
 #' @template param-kernel
 #' @template param-band
 #' @param optim_fun Optional specification of local likelihood optimization algorithm.  See **Details**.
-#' @param rm.zero Logical indicating whether zero values in `u1` and `u2` should be removed when calculating the local likelihood. If `rm.zero = TRUE`, the rows with `u1=0` or `u2=0` are removed from the data, if `rm.zero = FALSE`, then a small quantity is added to `u1` and `u2` to avoid numerical issues. 
+#' @param rm.zero Logical indicating whether zero values in `u1` and `u2` should be removed when calculating the local likelihood. 
 #' @param cl Optional parallel cluster created with [parallel::makeCluster()], in which case optimization for each element of `x0` will be done in parallel on separate cores.  If `cl == NA`, computations are run serially.
 #' @return List with the following elements:
 #' \describe{
@@ -31,10 +31,8 @@ SurvCopLocFit <- function(u1, u2, status1, status2,
                           family, x, x0, nx = 100,
                           degree = 1,
                           eta, kernel = KernEpa, band,
-                          rm.zero = TRUE,
-                          optim_fun, cl = NA) {
+                          optim_fun, rm.zero = TRUE, cl = NA) {
 
-  zeros <- match.arg(zeros)
   # default x0
   if(missing(x0)) {
     x0 <- seq(min(x), max(x), len = nx)
