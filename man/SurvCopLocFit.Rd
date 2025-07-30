@@ -73,12 +73,12 @@ If the default method is to be overridden, \code{optim_fun} should be provided a
 # for varying dependence parameter in bivariate survival data
 
 # simulate data
-set.seed(11)
-n <- 2000 # sample size
+set.seed(31)
+n <- 1000 # sample size
 family <- 3 # Clayton copula
 x <- runif(n)
 truetau <- function(x, family){
-  eta <- 2*cos(3*x^2-1)-sin(2*x^3)+x
+  eta <- 2*cos(10*x^2-1)-sin(2*x^3)+x
   tau <- BiCopEta2Tau(family = family, eta=eta)
   # tau <- rep(runif(1, 0, 1), length(x)) # constant dependence parameter in Kendall's tau scale
   return(tau)
@@ -105,7 +105,7 @@ u2 <- sapply(Y2, function(y){SurvivalCop::KM(t=y, Y = Y2, status = status2)})
 
 # local likelihood estimation
 x0 <- seq(min(x), max(x), len = 100)
-band <- .2
+band <- .1
 system.time({
   eta_hat <- SurvCopLocFit(u1 = u1, u2 = u2,
                            status1 = status1, status2 = status2,
