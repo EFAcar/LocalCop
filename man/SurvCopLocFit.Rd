@@ -72,7 +72,7 @@ If the default method is to be overridden, \code{optim_fun} should be provided a
 # the following example shows the local likelihood estimation 
 # for varying dependence parameter in bivariate survival data
 
-# simulate data
+# simulate survival data
 set.seed(31)
 n <- 1000 # sample size
 family <- 3 # Clayton copula
@@ -86,21 +86,25 @@ truetau <- function(x, family){
 plot(x, truetau(x, family), ylim = c(0,1))
 rho <- truetau(x, family)
 par <- VineCopula::BiCopTau2Par(family, rho)
-sdata <- SurvSim(n, family = family, par = par, 
-                 marpar1 = c(1, 1), marpar2 = c(2, 2), marparc = c(3, 3),  
-                 mardist = "weibull", type = "rcen")
+marpar1 <- c(1, 1)
+marpar2 <- c(2, 2)
+marparc <- c(3, 3)
+U <- VineCopula::BiCopSim(N = n, family = family, par = par, par2 = 0)
+D <- rweibull(n, shape = marparc[2], scale =  marparc[1]^(-1/marparc[2]))
+Y <- qweibull(U[,1], shape = marpar1[2], 
+              scale = marpar1[1]^(-1/marpar1[2]), lower.tail= F)
+C <- qweibull(U[,2], shape = marpar2[2], 
+              scale = marpar2[1]^(-1/marpar2[2]), lower.tail= F)
+Y1 <- pmin(Y, D) 
+Y2 <- pmin(C, D) 
+status1 <- 1*(Y <= D)
+status2 <- 1*(C <= D)
 
-
-# get observed data
-data <- sdata$data
-Y1 <- data[,1]
-Y2 <- data[,2]
-status1 <- data[,3]
-status2 <- data[,4]
-
-# get KM estimates of the survival functions -- for checks only
-u1 <- sapply(Y1, function(y){SurvivalCop::KM(t=y, Y = Y1, status = status1)})
-u2 <- sapply(Y2, function(y){SurvivalCop::KM(t=y, Y = Y2, status = status2)})
+# get KM estimates of the survival functions 
+km1 <- survival::survfit(survival::Surv(Y1, status1) ~ 1, data=data.frame(Y1, status1))
+u1 <- km1$surv[match(Y1, km1$time)]
+km2 <- survival::survfit(survival::Surv(Y2, status2) ~ 1, data=data.frame(Y2, status2))
+u2 <- km2$surv[match(Y2, km2$time)]
 
 
 # local likelihood estimation

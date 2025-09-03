@@ -15,7 +15,7 @@ test_that("Survival likelihood is same in manual calculation and TMB", {
       # generate data
       family <- test_descr$family[ii]
       args <- survdata_sim(family = family)
-      # args <- data_checks(args)
+      args <- data_checks(args)
       # gather data
       u1 <- args$udata[,1]
       u2 <- args$udata[,2]
@@ -25,6 +25,17 @@ test_that("Survival likelihood is same in manual calculation and TMB", {
       x <- args$x
       wgt <- args$wgt
       wpos <- wgt > 0 # index of positive weights
+      # loglik in TMB
+      ll_tmb <- SurvCopLocFun(u1 = u1, 
+                              u2 = u2,
+                              status1 = status1, 
+                              status2 = status2, 
+                              family = family, 
+                              x = x, 
+                              x0 = args$x0,
+                              wgt = wgt, 
+                              eta = args$eta)
+      ll_tmb <- -ll_tmb$fn(args$eta)
       # subset data
       wgt <- wgt[wpos]
       x <- x[wpos]
@@ -47,6 +58,17 @@ test_that("Survival likelihood is same in manual calculation and TMB", {
       status1 <- status1[ix]
       status2 <- status2[ix]
       epar <- epar[ix]
+      # handle zeros in u1 and u2
+      iz <- which(u1==0 | u2==0)
+      if(length(iz) > 0){
+        u1 <- u1[-iz]
+        u2 <- u2[-iz] 
+        status1 <- status1[-iz]
+        status2 <- status2[-iz]
+        x <- x[-iz]
+        wgt <- wgt[-iz]
+        epar <- epar[-iz]
+      }
       # loglik in R
       ll_r <- SurvCopDens(u1 = u1, 
                            u2 = u2,
@@ -55,17 +77,6 @@ test_that("Survival likelihood is same in manual calculation and TMB", {
                            family = family,
                            par = epar)
       ll_r <- sum(wgt * ll_r)
-      # loglik in TMB
-      ll_tmb <- SurvCopLocFun(u1 = u1, 
-                              u2 = u2,
-                              status1 = status1, 
-                              status2 = status2, 
-                              family = family, 
-                              x = x, 
-                              x0 = args$x0,
-                              wgt = wgt, 
-                              eta = args$eta)
-      ll_tmb <- -ll_tmb$fn(args$eta)
       expect_equal(ll_r, ll_tmb)
     }
   }

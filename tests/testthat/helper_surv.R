@@ -56,23 +56,23 @@ survdata_sim <- function(family) {
 }
 
 
-data_checks <- function(args){
-  # keep only positive weights
-  udata <- args$udata[args$wgt>0,]
-  epar <- args$epar[args$wgt>0]
-  wgt <- args$wgt[args$wgt>0]
-  x <- args$x[args$wgt>0]
-  # only keep points with positive survival estimates (exclude zero)
-  ix <- udata[,1] > 0 | udata[,2] > 0
-  udata <- udata[ix,]
-  epar <- epar[ix]
-  wgt <- wgt[ix]
-  x <- x[ix]
-  # return list
-  list(udata = udata,
-       epar = epar, wgt = wgt,
-       x = x, x0 = args$x0, eta = args$eta)
-}
+# data_checks <- function(args){
+#   # keep only positive weights
+#   udata <- args$udata[args$wgt>0,]
+#   epar <- args$epar[args$wgt>0]
+#   wgt <- args$wgt[args$wgt>0]
+#   x <- args$x[args$wgt>0]
+#   # only keep points with positive survival estimates (exclude zero)
+#   ix <- udata[,1] > 0 | udata[,2] > 0
+#   udata <- udata[ix,]
+#   epar <- epar[ix]
+#   wgt <- wgt[ix]
+#   x <- x[ix]
+#   # return list
+#   list(udata = udata,
+#        epar = epar, wgt = wgt,
+#        x = x, x0 = args$x0, eta = args$eta)
+# }
 
 
 
