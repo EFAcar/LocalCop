@@ -1,20 +1,14 @@
-# the following example shows the local likelihood estimation
-# for varying dependence parameter in bivariate survival data
+# the following example shows the maximum likelihood estimation
+# for constant dependence parameter in bivariate survival data
 
 # simulate survival data
 set.seed(51)
 n <- 1000 # sample size
 family <- 3 # Clayton copula
 x <- runif(n)
-truetau <- function(x, family) {
-  eta <- 2 * cos(10 * x^2 - 1) - sin(2 * x^3) + x
-  tau <- BiCopEta2Tau(family = family, eta = eta)
-  # tau <- rep(runif(1, 0, 1), length(x)) # constant dependence parameter in Kendall's tau scale
-  return(tau)
-}
-plot(x, truetau(x, family), ylim = c(0, 1))
-rho <- truetau(x, family)
-par <- VineCopula::BiCopTau2Par(family, rho)
+truetau <- runif(1,0,1)
+plot(x, rep(truetau, n), ylim = c(0, 1))
+par <- VineCopula::BiCopTau2Par(family, truetau)
 marpar1 <- c(1, 1)
 marpar2 <- c(2, 2)
 marparc <- c(3, 3)
@@ -50,56 +44,53 @@ km2 <- survival::survfit(
 u2 <- km2$surv[match(Y2, km2$time)]
 
 
-# local likelihood estimation
-x0 <- seq(min(x), max(x), len = 100)
-band <- .1
+# (pseudo) maximum likelihood estimation via TMB
+
 system.time({
-  eta_hat <- SurvCopLocFit(
+  eta_hat <- SurvCopFit(
     u1 = u1,
     u2 = u2,
     status1 = status1,
     status2 = status2,
-    family = family,
-    x = x,
-    x0 = x0,
-    band = band
+    family = family
   )
 })
 
 
-# custom optimization routine using stats::optim (gradient-free)
-my_optim <- function(obj) {
-  opt <- stats::optim(par = obj$par, fn = obj$fn, method = "Nelder-Mead")
-  return(opt$par[1]) # always return constant term, even if degree > 0
-}
-system.time({
-  eta_hat2 <- SurvCopLocFit(
+
+
+
+# optimizing manual likelihood function
+fun <- function(v) {
+  -SurvCondiCopLik(
     u1 = u1,
     u2 = u2,
     status1 = status1,
     status2 = status2,
     family = family,
-    x = x,
-    x0 = x0,
-    band = band,
-    optim_fun = my_optim
-  )
+    X = 0,
+    eta = v, 
+    degree = 0)}
+
+
+system.time({
+  eta_hat2 <- nlminb(start=BiCopTau2Eta(family, cor(u1,u2)), objective=fun)$par
 })
 
 
 # compare results
 plot(
-  x0,
-  truetau(x0, family),
+  x,
+  rep(truetau, n),
   type = "l",
   xlab = expression(x),
   ylab = expression(tau(x)),
   ylim = c(0, 1)
 )
-lines(x0, BiCopEta2Tau(family, eta = eta_hat$eta), col = "red")
-lines(x0, BiCopEta2Tau(family, eta = eta_hat2$eta), col = "blue")
+lines(x, rep(BiCopEta2Tau(family, eta = eta_hat), n), col = "red")
+lines(x, rep(BiCopEta2Tau(family, eta = eta_hat2), n), col = "blue")
 legend(
   "bottomleft",
   fill = c("black", "red", "blue"),
-  legend = c("True", "optim_default", "Nelder-Mead")
+  legend = c("True", "TMB", "R")
 )

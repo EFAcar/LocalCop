@@ -32,7 +32,7 @@ SurvCopLocFit <- function(u1, u2, status1, status2,
                           degree = 1,
                           eta, kernel = KernEpa, band,
                           optim_fun, rm.zero = TRUE, cl = NA) {
-
+  
   # default x0
   if(missing(x0)) {
     x0 <- seq(min(x), max(x), len = nx)
