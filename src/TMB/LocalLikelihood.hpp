@@ -51,3 +51,6 @@ Type LocalLikelihood(objective_function<Type> *obj) {
   nll = -sum(lpdf);
   return nll;
 }
+
+#undef TMB_OBJECTIVE_PTR
+#define TMB_OBJECTIVE_PTR this

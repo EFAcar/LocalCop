@@ -1,6 +1,6 @@
 # 29/01/2024
 
-- [ ] Finish documentation for d/p/h of {gumbel/frank/clayton}.hpp follwing template.
+- [ ] Finish documentation for d/p/h of {gumbel/frank/clayton}.hpp following template.
 
 - [ ] Put all of these directly on the log scale, i.e., `if(giv_log) return ans else return exp(ans)`.
 
