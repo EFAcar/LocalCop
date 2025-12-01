@@ -3,7 +3,7 @@
 library(LocalCop)
 library(TMB)
 library(testthat)
-source("tests/testthat/helper_surv.R")
+source("helper_surv.R")
 
 test_that("Survival likelihood is same in manual calculation and TMB", {
   nreps <- 20

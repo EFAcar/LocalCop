@@ -35,7 +35,7 @@ SurvCopLikCV <- function(u1, u2, status1, status2, family, x,
   # initialize eta
   if(!degree %in% 0:1) stop("degree must be 0 or 1.")
   ## degree <- match.arg(degree)
-  ieta <- LocalCop:::.get_etaNu(u1 = u1, u2 = u2, family = family,
+  ieta <- .get_etaNu(u1 = u1, u2 = u2, family = family,
                                 degree = degree, eta = eta)$eta
   
   # cross validation: estimation step
