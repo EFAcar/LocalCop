@@ -54,8 +54,8 @@ u2 <- km2$surv[match(Y2, km2$time)]
 band <- seq(0.1, 0.5, by=0.025)
 system.time({
   cv_lik <- sapply(band, function(h){
-  SurvCopLikCV(u1, u2, status1, status2, family, x, degree = 1, band = h)})
-})
+  LocalCop::SurvCopLikCV(u1, u2, status1, status2, family, x,  band = h)})
+  })
 plot(band, cv_lik)
 
 # local likelihood estimation

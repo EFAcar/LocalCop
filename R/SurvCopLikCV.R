@@ -20,9 +20,10 @@
 #' }
 #' @export
 SurvCopLikCV <- function(u1, u2, status1, status2, family, x, 
-                          degree = 1, eta, kernel = KernEpa, band,
-                          optim_fun, cveta_out = FALSE,
-                          cv_all = FALSE, cl = NA) {
+                         degree = 1, eta, kernel = KernEpa, band,
+                         optim_fun, cveta_out = FALSE,
+                         cv_all = FALSE, cl = NA) {
+
   # sort observations
   ix <- order(x)
   x <- x[ix]
@@ -30,13 +31,13 @@ SurvCopLikCV <- function(u1, u2, status1, status2, family, x,
   u2 <- u2[ix]
   status1 <- status1[ix]
   status2 <- status2[ix]
-
+  
   # initialize eta
   if(!degree %in% 0:1) stop("degree must be 0 or 1.")
   ## degree <- match.arg(degree)
-  ieta <- .get_etaNu(u1 = u1, u2 = u2, family = family,
-                    degree = degree, eta = eta)$eta
-
+  ieta <- LocalCop:::.get_etaNu(u1 = u1, u2 = u2, family = family,
+                                degree = degree, eta = eta)$eta
+  
   # cross validation: estimation step
   # optimization function
   if(missing(optim_fun)) {
